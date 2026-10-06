@@ -1,3 +1,40 @@
+# CatBoost-based PAN Prediction Model
+
+Code and data for the paper:
+
+> **CatBoost-revealed Meteorological and Chemical Drivers of Wintertime PAN in an Industrial City (Zibo) in the North China Plain**
+
+---
+
+## English
+
+### Overview
+
+This repository contains the data and code used to train the CatBoost model for predicting peroxyacetyl nitrate (PAN) concentrations, and to interpret the model with SHAP (SHapley Additive exPlanations).
+
+Twelve input features were used — five meteorological factors (air temperature, absolute humidity, zonal wind, meridional wind, solar radiation) and seven chemical factors (NOx, NO/NO2, HONO, PM2.5, O3, PM1, TVOC) — based on 1,704 hourly samples. The dataset was randomly split into a training set (80%) and a test set (20%). Hyperparameters were optimized with Optuna (30 trials per model, five-fold cross-validation, negative MAPE as the objective), and four ensemble algorithms (CatBoost, XGBoost, LightGBM, Random Forest) were compared. CatBoost performed best and was selected as the final model.
+
+### Files
+
+| File | Description |
+| --- | --- |
+| `X_noscale.npy` | Feature matrix, shape (1704, 12), unnormalized |
+| `y_noscale.npy` | Target variable (PAN), shape (1704, 1), unnormalized |
+| `train_model.py` | Trains the final CatBoost model with the paper's hyperparameters, evaluates it, and runs the SHAP analysis |
+| `optuna_search.py` | Re-runs the Optuna hyperparameter search for the four models and produces the performance comparison |
+| `catboost_model_pan_noscale.model` | The trained CatBoost model used in the paper |
+| `shap_values.npy` | SHAP values of the final model, shape (1704, 12) |
+| `shap_feature_importance.csv` | Feature importance ranking based on mean absolute SHAP values |
+| `explainer.pkl` | Serialized `shap.TreeExplainer` (joblib) |
+| `requirements.txt` | Required Python packages |
+
+**Feature order** — the 12 columns of `X_noscale.npy` follow exactly this order:
+
+```
+temperature, humidity, U (zonal wind), V (meridional wind), solar radiation,
+TVOC, NOx, HONO, PM2.5, O3, PM1, NO/NO2
+```
+
 ### Requirements
 
 ```bash
@@ -90,3 +127,4 @@ python optuna_search.py
 `train_model.py` 使用论文报告的超参数（已固定写在脚本中），在任何机器上运行都能**完全一致地**复现最终模型及其 SHAP 值。
 
 `optuna_search.py` 用于重跑超参数搜索。由于 Optuna 是串行搜索——每一轮 trial 的参数由之前各轮的实际交叉验证得分决定，而得分来自真实训练的多线程梯度提升模型——搜索轨迹会受机器与库版本影响，不同环境下结果可能有细微差异。脚本开头的注释中记录了我们在本机搜索得到的结果。
+
